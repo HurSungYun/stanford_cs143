@@ -65,9 +65,28 @@ SELFTYPE        SELF_TYPE
 NEWLINE         \n
 WHITECHAR       [ \f\r\t\v]
 STRING          \"[^\"\0]\"
-
+DOUBLEQUOTE     \"
 
 /* keywords */
+CLASS           (?i:class)
+ELSE            (?i:else)
+FI              (?i:fi)
+IF              (?i:if)
+IN              (?i:inherits)
+ISVOID          (?i:isvoid)
+LET             (?i:let)
+LOOP            (?i:loop)
+POOL            (?i:pool)
+THEN            (?i:then)
+WHILE           (?i:while)
+CASE            (?i:case)
+ESAC            (?i:esac)
+NEW             (?i:new)
+OF              (?i:of)
+NOT             (?i:not)
+
+TRUE            t(?i:rue)
+FALSE           f(?i:alse)
 
 
 DARROW          =>
