@@ -67,7 +67,7 @@ SELFTYPE        SELF_TYPE
 
 /* strings */
 NEWLINE         \n
-WHITECHAR       [ \f\r\t\v]
+WHITESPACE       [ \f\r\t\v]
 STRING          \"[^\"\0]\"
 DOUBLEQUOTE     \"
 
@@ -92,13 +92,14 @@ NOT             (?i:not)
 TRUE            t(?i:rue)
 FALSE           f(?i:alse)
 
+/* others */
 DARROW            =>
 LE                <=
 ASSIGN            <-
 
 START_COMMENT     "(*"
 END_COMMENT       "*)"
-ONE_LINE_COMMENT  (--).*
+ONE_LINE_COMMENT  (--)
 
 %%
 
@@ -112,6 +113,16 @@ ONE_LINE_COMMENT  (--).*
  /*
   *  Nested comments
   */
+
+{ONE_LINE_COMMNET}   { BEGIN(LINECOMMENT); }
+{ONE_LINE_COMMENT}.  { }
+{ONE_LINE_COMMENT}{NEWLINE} { curr_lineno++;
+                              BEGIN(INITIAL); }
+
+{START_COMMENT}    { BEGIN(COMMENT) }
+{COMMENT}{NEWLINE} { curr_lineno++; }
+{COMMENT}{END_COMMNET} { BEGIN(INITIAL); }
+{COMMENT}. { }
 
 
  /*
@@ -155,5 +166,8 @@ ONE_LINE_COMMENT  (--).*
   *
   */
 
+
+{NEWLINE} { curr_lineno++; }
+{WHITESPACE} { }
 
 %%
