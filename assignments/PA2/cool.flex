@@ -89,7 +89,12 @@ TRUE            t(?i:rue)
 FALSE           f(?i:alse)
 
 
-DARROW          =>
+DARROW            =>
+LE                <=
+ASSIGN            <-
+START_COMMENT     "(*"
+END_COMMENT       "*)"
+ONE_LINE_COMMENT  (--).*
 
 %%
 
@@ -102,6 +107,7 @@ DARROW          =>
   *  The multiple-character operators.
   */
 {DARROW}		{ return (DARROW); }
+
 
  /*
   * Keywords are case-insensitive except for the values true and false,
