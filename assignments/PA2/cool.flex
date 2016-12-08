@@ -45,6 +45,10 @@ extern YYSTYPE cool_yylval;
 
 %}
 
+%x COMMENT
+%x LINECOMMENT
+%x STRING
+
 /*
  * Define names for regular expressions here.
  */
@@ -88,10 +92,10 @@ NOT             (?i:not)
 TRUE            t(?i:rue)
 FALSE           f(?i:alse)
 
-
 DARROW            =>
 LE                <=
 ASSIGN            <-
+
 START_COMMENT     "(*"
 END_COMMENT       "*)"
 ONE_LINE_COMMENT  (--).*
@@ -107,7 +111,27 @@ ONE_LINE_COMMENT  (--).*
   *  The multiple-character operators.
   */
 {DARROW}		{ return (DARROW); }
+{LE}            { return (LE); }
+{ASSIGN}        { return (ASSIGN); }
 
+{CLASS}         { return (CLASS); }
+{ELSE}          { return (ELSE); }
+{FI}            { return (FI); }
+{IF}            { return (IF); }
+{IN}            { return (IN); }
+{ISVOID}        { return (ISVOID); }
+{LET}           { return (LET); }
+{LOOP}          { return (LOOP); }
+{POOL}          { return (POOL); }
+{THEN}          { return (THEN); }
+{WHILE}         { return (WHILE); }
+{CASE}          { return (CASE); }
+{ESAC}          { return (ESAC); }
+{NEW}           { return (NEW); }
+{OF}            { return (OF); }
+{NOT}           { return (NOT); }
+{TRUE}          { return (TRUE); }
+{FALSE}         { return (FALSE); }
 
  /*
   * Keywords are case-insensitive except for the values true and false,
