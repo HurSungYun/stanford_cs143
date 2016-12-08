@@ -102,6 +102,13 @@ ONE_LINE_COMMENT  (--).*
 
 %%
 
+{INTEGER}       { cool_yylval.symbol = inttable.add_string(yytext);
+                  return (INT_CONST); }
+{TYPEID}        { cool_yylval.symbol = inttable.add_string(yytext);
+                  return (TYPEID); }
+{OBJECTID}      { cool_yylval.symbol = inttable.add_string(yytext);
+                  return (OBJECTID); }
+
  /*
   *  Nested comments
   */
@@ -130,8 +137,10 @@ ONE_LINE_COMMENT  (--).*
 {NEW}           { return (NEW); }
 {OF}            { return (OF); }
 {NOT}           { return (NOT); }
-{TRUE}          { return (TRUE); }
-{FALSE}         { return (FALSE); }
+{TRUE}          { cool_yylval.boolean = true;
+                  return (BOOL_CONST); }
+{FALSE}         { cool_yylval.boolean = false;
+                  return (BOOL_CONST); }
 
  /*
   * Keywords are case-insensitive except for the values true and false,
