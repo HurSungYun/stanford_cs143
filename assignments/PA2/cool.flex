@@ -47,13 +47,13 @@ int comment_depth = 0;
 
 int str_len;
 
-void addNullChar() {
-  *string_buf_ptr = '\0';
-}
-
 bool isExceedLength() {
   if (str_len + 1 >= MAX_STR_LENGTH) return true;
   else return false;
+}
+
+void setErr(char* msg) {
+  cool_yylval.error_msg = msg;
 }
 
 %}
@@ -190,27 +190,38 @@ ONE_LINE_COMMENT  (--)
 
 {DOUBLEQUOTE} { BEGIN(STRING); str_len = 0; }
 
-<STRING>{DOUBLEQUOTE} { }
+<STRING>{DOUBLEQUOTE} { cool_yylval.symbol = stringtable.add_string(string_buf);
+                        string_buf[0] = '\0';
+                        BEGIN(INITIAL);
+                        return (STR_CONST); }
 
-<STRING><<EOF>> { }
+<STRING><<EOF>> { setErr("EOF in comment"); 
+                  curr_lineno++;
+                  BEGIN(INITIAL);
+                  return ERROR; }
 
-<STRING>{NEWLINE} { }
+<STRING>{NEWLINE} { setErr("Unterminated string constant");
+                    curr_lineno++;
+                    BEGIN(INITIAL);
+                    return ERROR; }
 
-<STRING>//{NEWLINE} { }
+<STRING>\\{NEWLINE} { }
 
-<STRING>//{DOUBLEQUOTE} { }
+<STRING>\\{DOUBLEQUOTE} { }
 
-<STRING>//n { }
+<STRING>\\\0 { }
 
-<STRING>//t { }
+<STRING>\\n { }
 
-<STRING>//v { }
+<STRING>\\t { }
 
-<STRING>//b { }
+<STRING>\\v { }
 
-<STRING>//f { }
+<STRING>\\b { }
 
-<STRING>//. { }
+<STRING>\\f { }
+
+<STRING>\\. { }
 
 <STRING>. { }
 
