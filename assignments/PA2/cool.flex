@@ -119,7 +119,7 @@ START_COMMENT     "(*"
 END_COMMENT       "*)"
 ONE_LINE_COMMENT  (--)
 
-{SINGLE_RETURN} [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
+SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 
 %%
 
@@ -255,6 +255,16 @@ ONE_LINE_COMMENT  (--)
 <STRING>. { if(isTooLong()) { return strLenErr(); }
             str_len++;
             strcat(string_buf, yytext); }
+
+<STRING_ERR>{DOUBLEQUOTE} { BEGIN(INITIAL); }
+
+<STRING_ERR>\\\n { curr_lineno++;
+                   BEGIN(INITIAL); }
+
+<STRING_ERR>\n { curr_lineno++;
+                 BEGIN(INITIAL); }
+
+<STRING_ERR>. { }
 
 {NEWLINE} { curr_lineno++; }
 {WHITESPACE} { }
