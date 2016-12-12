@@ -101,6 +101,8 @@ START_COMMENT     "(*"
 END_COMMENT       "*)"
 ONE_LINE_COMMENT  (--)
 
+{SINGLE_RETURN} [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
+
 %%
 
 {INTEGER}       { cool_yylval.symbol = inttable.add_string(yytext);
@@ -153,6 +155,7 @@ ONE_LINE_COMMENT  (--)
 {FALSE}         { cool_yylval.boolean = false;
                   return (BOOL_CONST); }
 
+
  /*
   * Keywords are case-insensitive except for the values true and false,
   * which must begin with a lower-case letter.
@@ -169,5 +172,7 @@ ONE_LINE_COMMENT  (--)
 
 {NEWLINE} { curr_lineno++; }
 {WHITESPACE} { }
+
+{SINGLE_RETURN} { return (yytext[0]); }
 
 %%
