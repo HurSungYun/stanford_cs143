@@ -43,6 +43,19 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
 
+int comment_depth = 0;
+
+int str_len;
+
+void addNullChar() {
+  *string_buf_ptr = '\0';
+}
+
+bool isExceedLength() {
+  if (str_len + 1 >= MAX_STR_LENGTH) return true;
+  else return false;
+}
+
 %}
 
 %x COMMENT
@@ -62,8 +75,6 @@ UPPERCHAR       [A-Z]
 LOWERCHAR       [a-z]
 TYPEID          {UPPERCHAR}{IDENTIFIER}*
 OBJECTID        {LOWERCHAR}{IDENTIFIER}*
-SELF            self
-SELFTYPE        SELF_TYPE
 
 /* strings */
 NEWLINE         \n
@@ -116,23 +127,38 @@ ONE_LINE_COMMENT  (--)
   *  Nested comments
   */
 
-{ONE_LINE_COMMNET}   { BEGIN(LINECOMMENT); }
-{ONE_LINE_COMMENT}.  { }
-{ONE_LINE_COMMENT}{NEWLINE} { curr_lineno++;
+<ONE_LINE_COMMNET>   { BEGIN(LINECOMMENT); }
+<ONE_LINE_COMMENT>.  { }
+<ONE_LINE_COMMENT>{NEWLINE} { curr_lineno++;
                               BEGIN(INITIAL); }
 
-{START_COMMENT}    { BEGIN(COMMENT) }
-{COMMENT}{NEWLINE} { curr_lineno++; }
-{COMMENT}{END_COMMNET} { BEGIN(INITIAL); }
-{COMMENT}. { }
+{START_COMMENT}    { comment_depth++; BEGIN(COMMENT); }
+
+<COMMENT>{START_COMMENT} { comment_depth++; }
+
+<COMMENT>{NEWLINE} { curr_lineno++; }
+
+<COMMENT>{END_COMMNET} { comment_depth--; if ( comment_depth == 0 ) BEGIN(INITIAL); }
+
+<COMMENT><<EOF>> { BEGIN(INITIAL); return ERROR; }
+
+{END_COMMENT} { BEGIN(INITIAL); return ERROR; }
+
+<COMMENT>. { }
 
 
  /*
   *  The multiple-character operators.
   */
+
 {DARROW}		{ return (DARROW); }
 {LE}            { return (LE); }
 {ASSIGN}        { return (ASSIGN); }
+
+ /*
+  * Keywords are case-insensitive except for the values true and false,
+  * which must begin with a lower-case letter.
+  */
 
 {CLASS}         { return (CLASS); }
 {ELSE}          { return (ELSE); }
@@ -155,13 +181,6 @@ ONE_LINE_COMMENT  (--)
 {FALSE}         { cool_yylval.boolean = false;
                   return (BOOL_CONST); }
 
-
- /*
-  * Keywords are case-insensitive except for the values true and false,
-  * which must begin with a lower-case letter.
-  */
-
-
  /*
   *  String constants (C syntax)
   *  Escape sequence \c is accepted for all characters c. Except for 
@@ -169,6 +188,31 @@ ONE_LINE_COMMENT  (--)
   *
   */
 
+{DOUBLEQUOTE} { BEGIN(STRING); str_len = 0; }
+
+<STRING>{DOUBLEQUOTE} { }
+
+<STRING><<EOF>> { }
+
+<STRING>{NEWLINE} { }
+
+<STRING>//{NEWLINE} { }
+
+<STRING>//{DOUBLEQUOTE} { }
+
+<STRING>//n { }
+
+<STRING>//t { }
+
+<STRING>//v { }
+
+<STRING>//b { }
+
+<STRING>//f { }
+
+<STRING>//. { }
+
+<STRING>. { }
 
 {NEWLINE} { curr_lineno++; }
 {WHITESPACE} { }
