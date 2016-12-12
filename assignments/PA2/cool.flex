@@ -47,9 +47,15 @@ int comment_depth = 0;
 
 int str_len;
 
-bool isExceedLength() {
+bool isTooLong() {
   if (str_len + 1 >= MAX_STR_LENGTH) return true;
   else return false;
+}
+
+int strLenErr() {
+  string_buf[0] = '\0';
+  setErr("String constant too long");
+  return ERROR;
 }
 
 void setErr(char* msg) {
@@ -61,6 +67,7 @@ void setErr(char* msg) {
 %x COMMENT
 %x LINECOMMENT
 %x STRING
+%x STRING_ERR
 
 /*
  * Define names for regular expressions here.
@@ -201,33 +208,60 @@ ONE_LINE_COMMENT  (--)
                   return ERROR; }
 
 <STRING>{NEWLINE} { setErr("Unterminated string constant");
+                    string_buf[0] = '\0';
                     curr_lineno++;
                     BEGIN(INITIAL);
                     return ERROR; }
 
-<STRING>\\{NEWLINE} { }
+<STRING>\0 { setErr("String contains null character");
+             string_buf[0] = '\0';
+             BEGIN(STRING_ERR);
+             return ERROR; }
 
-<STRING>\\{DOUBLEQUOTE} { }
+<STRING>\\\0 { setErr("String contains escaped null character");
+               string_buf[0] = '\0';
+               BEGIN(STRING_ERR);
+               return ERROR; }
 
-<STRING>\\\0 { }
+<STRING>\\{NEWLINE} { if(isTooLong()) { return strLenErr(); }
+                      str_len++;
+                      curr_lineno++;
+                      strcat(string_buf, "\n"); }
 
-<STRING>\\n { }
+<STRING>\\n { if(isTooLong()) { return strLenErr(); }
+              str_len = str_len + 2;
+              strcat(string_buf, "\n"); }
 
-<STRING>\\t { }
+<STRING>\\t { if(isTooLong()) { return strLenErr(); }
+              str_len++;
+              strcat(string_buf, "\t"); }
 
-<STRING>\\v { }
+<STRING>\\v { if(isTooLong()) { return strLenErr(); }
+              str_len++;
+              strcat(string_buf, "\v"); }
 
-<STRING>\\b { }
+<STRING>\\b { if(isTooLong()) { return strLenErr(); }
+              str_len++;
+              strcat(string_buf, "\b"); }
 
-<STRING>\\f { }
+<STRING>\\f { if(isTooLong()) { return strLenErr(); }
+              str_len++;
+              strcat(string_buf, "\f"); }
 
-<STRING>\\. { }
+<STRING>\\. { if(isTooLong()) { return strLenErr(); }
+              str_len++;
+              strcat(string_buf, &strdup(yytext)[1]); }
 
-<STRING>. { }
+<STRING>. { if(isTooLong()) { return strLenErr(); }
+            str_len++;
+            strcat(string_buf, yytext); }
 
 {NEWLINE} { curr_lineno++; }
 {WHITESPACE} { }
 
 {SINGLE_RETURN} { return (yytext[0]); }
+
+. { setErr(yytext);
+    return ERROR; }
 
 %%
