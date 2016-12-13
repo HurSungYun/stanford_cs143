@@ -94,7 +94,8 @@ CLASS           (?i:class)
 ELSE            (?i:else)
 FI              (?i:fi)
 IF              (?i:if)
-IN              (?i:inherits)
+INHERITS        (?i:inherits)
+IN              (?i:in)
 ISVOID          (?i:isvoid)
 LET             (?i:let)
 LOOP            (?i:loop)
@@ -124,37 +125,43 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 %%
 
 {INTEGER}       { cool_yylval.symbol = inttable.add_string(yytext);
-                  return (INT_CONST); }
-{TYPEID}        { cool_yylval.symbol = inttable.add_string(yytext);
+                  return INT_CONST; }
+{TYPEID}        { cool_yylval.symbol = stringtable.add_string(yytext);
                   return (TYPEID); }
-{OBJECTID}      { cool_yylval.symbol = inttable.add_string(yytext);
+{OBJECTID}      { cool_yylval.symbol = stringtable.add_string(yytext);
                   return (OBJECTID); }
 
  /*
   *  Nested comments
   */
 
-{ONE_LINE_COMMENT} { BEGIN(LINECOMMENT); }
 
-<LINECOMMENT>.  { }
-<LINECOMMENT>{NEWLINE} { curr_lineno++;
-                              BEGIN(INITIAL); }
 
 {START_COMMENT}    { comment_depth++; BEGIN(COMMENT); }
 
 <COMMENT>{START_COMMENT} { comment_depth++; }
 
-<COMMENT>{NEWLINE} { curr_lineno++; }
-
-<COMMENT>{END_COMMENT} { comment_depth--; if ( comment_depth == 0 ) BEGIN(INITIAL); }
-
-<COMMENT><<EOF>> { BEGIN(INITIAL); return ERROR; }
-
-{END_COMMENT} { BEGIN(INITIAL); return ERROR; }
-
 <COMMENT>. { }
 
+<COMMENT>{NEWLINE} { curr_lineno++; }
 
+<COMMENT>{END_COMMENT} { comment_depth--; if ( comment_depth == 0 ) { BEGIN(INITIAL); } }
+
+<COMMENT><<EOF>> { setErr("EOF in comment"); 
+                   BEGIN(INITIAL);
+                   return ERROR; }
+
+{END_COMMENT} { setErr("Unmatched *)");
+                BEGIN(INITIAL);
+                return ERROR; }
+
+
+{ONE_LINE_COMMENT} { BEGIN(LINECOMMENT); }
+
+<LINECOMMENT>.  { }
+
+<LINECOMMENT>{NEWLINE} { curr_lineno++;
+                         BEGIN(INITIAL); }
  /*
   *  The multiple-character operators.
   */
@@ -167,13 +174,12 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
   * Keywords are case-insensitive except for the values true and false,
   * which must begin with a lower-case letter.
   */
-
-{CLASS}         { return (CLASS); }
+(?i:class)      { return (CLASS); }
 {ELSE}          { return (ELSE); }
 {FI}            { return (FI); }
 {IF}            { return (IF); }
 {IN}            { return (IN); }
-{ISVOID}        { return (ISVOID); }
+{INHERITS}      { return (INHERITS); }
 {LET}           { return (LET); }
 {LOOP}          { return (LOOP); }
 {POOL}          { return (POOL); }
@@ -181,9 +187,10 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 {WHILE}         { return (WHILE); }
 {CASE}          { return (CASE); }
 {ESAC}          { return (ESAC); }
-{NEW}           { return (NEW); }
 {OF}            { return (OF); }
+{NEW}           { return (NEW); }
 {NOT}           { return (NOT); }
+{ISVOID}        { return (ISVOID); }
 {TRUE}          { cool_yylval.boolean = true;
                   return (BOOL_CONST); }
 {FALSE}         { cool_yylval.boolean = false;
@@ -203,7 +210,7 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
                         BEGIN(INITIAL);
                         return (STR_CONST); }
 
-<STRING><<EOF>> { setErr("EOF in comment"); 
+<STRING><<EOF>> { setErr("EOF in string constant"); 
                   curr_lineno++;
                   BEGIN(INITIAL);
                   return ERROR; }
@@ -271,6 +278,7 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 {WHITESPACE} { }
 
 {SINGLE_RETURN} { return (yytext[0]); }
+  
 
 . { setErr(yytext);
     return ERROR; }
