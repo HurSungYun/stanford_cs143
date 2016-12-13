@@ -86,7 +86,6 @@ OBJECTID        {LOWERCHAR}{IDENTIFIER}*
 /* strings */
 NEWLINE         \n
 WHITESPACE       [ \f\r\t\v]
-STRING          \"[^\"\0]\"
 DOUBLEQUOTE     \"
 
 /* keywords */
@@ -192,17 +191,6 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
                         BEGIN(INITIAL);
                         return (STR_CONST); }
 
-<STRING><<EOF>> { setErr("EOF in string constant"); 
-                  curr_lineno++;
-                  BEGIN(INITIAL);
-                  return ERROR; }
-
-<STRING>{NEWLINE} { setErr("Unterminated string constant");
-                    string_buf[0] = '\0';
-                    curr_lineno++;
-                    BEGIN(INITIAL);
-                    return ERROR; }
-
 <STRING>\0 { setErr("String contains null character");
              string_buf[0] = '\0';
              BEGIN(STRING_ERR);
@@ -213,40 +201,50 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
                BEGIN(STRING_ERR);
                return ERROR; }
 
-<STRING>\\{NEWLINE} { if(isTooLong()) { return strLenErr(); }
+<STRING>{NEWLINE} { setErr("Unterminated string constant");
+                    string_buf[0] = '\0';
+                    curr_lineno++;
+                    BEGIN(INITIAL);
+                    return ERROR; }
+
+
+<STRING>\\n { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
+              str_len++;
+              strcat(string_buf, "\n"); }
+
+<STRING>\\{NEWLINE} { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
                       str_len++;
                       curr_lineno++;
                       strcat(string_buf, "\n"); }
 
-<STRING>\\n { if(isTooLong()) { return strLenErr(); }
-              str_len = str_len + 2;
-              strcat(string_buf, "\n"); }
-
-<STRING>\\t { if(isTooLong()) { return strLenErr(); }
+<STRING>\\t { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
               str_len++;
               strcat(string_buf, "\t"); }
 
-<STRING>\\v { if(isTooLong()) { return strLenErr(); }
+<STRING>\\v { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
               str_len++;
               strcat(string_buf, "\v"); }
 
-<STRING>\\b { if(isTooLong()) { return strLenErr(); }
+<STRING>\\b { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
               str_len++;
               strcat(string_buf, "\b"); }
 
-<STRING>\\f { if(isTooLong()) { return strLenErr(); }
+<STRING>\\f { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
               str_len++;
               strcat(string_buf, "\f"); }
 
-<STRING>\\. { if(isTooLong()) { return strLenErr(); }
+<STRING>\\. { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
               str_len++;
               strcat(string_buf, &strdup(yytext)[1]); }
 
-<STRING>. { if(isTooLong()) { return strLenErr(); }
+<STRING><<EOF>> { setErr("EOF in string constant");
+                  curr_lineno++;
+                  BEGIN(INITIAL);
+                  return ERROR; }
+
+<STRING>. { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
             str_len++;
             strcat(string_buf, yytext); }
-
-
 
 <STRING_ERR>{DOUBLEQUOTE} { BEGIN(INITIAL); }
 
@@ -260,8 +258,6 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 
 {NEWLINE} { curr_lineno++; }
 {WHITESPACE} { }
-
-  
 
 . { setErr(yytext);
     return ERROR; }
