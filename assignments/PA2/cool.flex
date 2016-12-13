@@ -127,8 +127,6 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 
 <COMMENT>{START_COMMENT} { comment_depth++; }
 
-<COMMENT>. { }
-
 <COMMENT>{NEWLINE} { curr_lineno++; }
 
 <COMMENT>{END_COMMENT} { comment_depth--; if ( comment_depth == 0 ) { BEGIN(INITIAL); } }
@@ -137,16 +135,18 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
                    BEGIN(INITIAL);
                    return ERROR; }
 
+<COMMENT>. { }
+
 {END_COMMENT} { setErr("Unmatched *)");
                 BEGIN(INITIAL);
                 return ERROR; }
 
 {ONE_LINE_COMMENT} { BEGIN(LINECOMMENT); }
 
-<LINECOMMENT>.  { }
-
 <LINECOMMENT>{NEWLINE} { curr_lineno++;
                          BEGIN(INITIAL); }
+
+<LINECOMMENT>.  { }
 
 {INTEGER}       { cool_yylval.symbol = inttable.add_string(yytext);
                   return INT_CONST; }
@@ -206,7 +206,6 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
                     curr_lineno++;
                     BEGIN(INITIAL);
                     return ERROR; }
-
 
 <STRING>\\n { if(isTooLong()) { BEGIN(STRING_ERR); return strLenErr(); }
               str_len++;
