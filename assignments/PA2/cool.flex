@@ -47,8 +47,12 @@ int comment_depth = 0;
 
 int str_len;
 
+void setErr(char* msg) {
+  cool_yylval.error_msg = msg;
+}
+
 bool isTooLong() {
-  if (str_len + 1 >= MAX_STR_LENGTH) return true;
+  if (str_len + 1 >= MAX_STR_CONST) return true;
   else return false;
 }
 
@@ -56,10 +60,6 @@ int strLenErr() {
   string_buf[0] = '\0';
   setErr("String constant too long");
   return ERROR;
-}
-
-void setErr(char* msg) {
-  cool_yylval.error_msg = msg;
 }
 
 %}
@@ -117,7 +117,7 @@ ASSIGN            <-
 
 START_COMMENT     "(*"
 END_COMMENT       "*)"
-ONE_LINE_COMMENT  (--)
+ONE_LINE_COMMENT  "--"
 
 SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 
@@ -134,9 +134,10 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
   *  Nested comments
   */
 
-<ONE_LINE_COMMNET>   { BEGIN(LINECOMMENT); }
-<ONE_LINE_COMMENT>.  { }
-<ONE_LINE_COMMENT>{NEWLINE} { curr_lineno++;
+{ONE_LINE_COMMENT} { BEGIN(LINECOMMENT); }
+
+<LINECOMMENT>.  { }
+<LINECOMMENT>{NEWLINE} { curr_lineno++;
                               BEGIN(INITIAL); }
 
 {START_COMMENT}    { comment_depth++; BEGIN(COMMENT); }
@@ -145,7 +146,7 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 
 <COMMENT>{NEWLINE} { curr_lineno++; }
 
-<COMMENT>{END_COMMNET} { comment_depth--; if ( comment_depth == 0 ) BEGIN(INITIAL); }
+<COMMENT>{END_COMMENT} { comment_depth--; if ( comment_depth == 0 ) BEGIN(INITIAL); }
 
 <COMMENT><<EOF>> { BEGIN(INITIAL); return ERROR; }
 
