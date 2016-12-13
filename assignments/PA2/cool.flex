@@ -124,19 +124,6 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 
 %%
 
-{INTEGER}       { cool_yylval.symbol = inttable.add_string(yytext);
-                  return INT_CONST; }
-{TYPEID}        { cool_yylval.symbol = stringtable.add_string(yytext);
-                  return (TYPEID); }
-{OBJECTID}      { cool_yylval.symbol = stringtable.add_string(yytext);
-                  return (OBJECTID); }
-
- /*
-  *  Nested comments
-  */
-
-
-
 {START_COMMENT}    { comment_depth++; BEGIN(COMMENT); }
 
 <COMMENT>{START_COMMENT} { comment_depth++; }
@@ -155,26 +142,23 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
                 BEGIN(INITIAL);
                 return ERROR; }
 
-
 {ONE_LINE_COMMENT} { BEGIN(LINECOMMENT); }
 
 <LINECOMMENT>.  { }
 
 <LINECOMMENT>{NEWLINE} { curr_lineno++;
                          BEGIN(INITIAL); }
- /*
-  *  The multiple-character operators.
-  */
+
+{INTEGER}       { cool_yylval.symbol = inttable.add_string(yytext);
+                  return INT_CONST; }
 
 {DARROW}		{ return (DARROW); }
 {LE}            { return (LE); }
 {ASSIGN}        { return (ASSIGN); }
 
- /*
-  * Keywords are case-insensitive except for the values true and false,
-  * which must begin with a lower-case letter.
-  */
-(?i:class)      { return (CLASS); }
+{SINGLE_RETURN} { return (yytext[0]); }
+
+{CLASS}         { return (CLASS); }
 {ELSE}          { return (ELSE); }
 {FI}            { return (FI); }
 {IF}            { return (IF); }
@@ -196,12 +180,10 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 {FALSE}         { cool_yylval.boolean = false;
                   return (BOOL_CONST); }
 
- /*
-  *  String constants (C syntax)
-  *  Escape sequence \c is accepted for all characters c. Except for 
-  *  \n \t \b \f, the result is c.
-  *
-  */
+{TYPEID}        { cool_yylval.symbol = stringtable.add_string(yytext);
+                  return (TYPEID); }
+{OBJECTID}      { cool_yylval.symbol = stringtable.add_string(yytext);
+                  return (OBJECTID); }
 
 {DOUBLEQUOTE} { BEGIN(STRING); str_len = 0; }
 
@@ -264,6 +246,8 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
             str_len++;
             strcat(string_buf, yytext); }
 
+
+
 <STRING_ERR>{DOUBLEQUOTE} { BEGIN(INITIAL); }
 
 <STRING_ERR>\\\n { curr_lineno++;
@@ -277,7 +261,6 @@ SINGLE_RETURN [\{\}\(\)\;\:\.\,\=\+\-\<\~\*\/\@]
 {NEWLINE} { curr_lineno++; }
 {WHITESPACE} { }
 
-{SINGLE_RETURN} { return (yytext[0]); }
   
 
 . { setErr(yytext);
