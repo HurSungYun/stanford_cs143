@@ -135,7 +135,7 @@
     %type <class_> class
     
     /* You will want to change the following line. */
-    %type <features> dummy_feature_list
+    %type <features> feature_list
     
     /* Precedence declarations go here. */
     
@@ -148,7 +148,7 @@
     ;
     
     class_list
-    : class			/* single class */
+    : class			/* single class , is it okay to avoid left recursion? */
     { $$ = single_Classes($1);
     parse_results = $$; }
     | class_list class	/* several classes */
@@ -157,17 +157,99 @@
     ;
     
     /* If no parent is specified, the class inherits from the Object class. */
-    class	: CLASS TYPEID '{' dummy_feature_list '}' ';'
+    class	: CLASS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,idtable.add_string("Object"),$4,
     stringtable.add_string(curr_filename)); }
-    | CLASS TYPEID INHERITS TYPEID '{' dummy_feature_list '}' ';'
+    | CLASS TYPEID INHERITS TYPEID '{' feature_list '}' ';'
     { $$ = class_($2,$4,$6,stringtable.add_string(curr_filename)); }
     ;
     
     /* Feature list may be empty, but no empty features in list. */
-    dummy_feature_list:		/* empty */
+    feature_list:		/* empty */
     {  $$ = nil_Features(); }
-    
+    | feature ';'
+    { }
+    | feature_list feature ';'
+    { }
+
+
+    feature
+    : OBJECTID '(' formals ')' ':' TYPEID '{' expr '}'
+    { }
+    | OBJECTID ':' TYPEID ASSIGN expr
+    { }
+    | OBJECTID ':' TYPEID
+    { }
+
+    formals
+    : formal
+    { }
+    | formals ',' formal
+    { }
+
+    formal
+    : OBJECTID ':' TYPEID
+    { }
+
+    expr
+    : OBJECTID ASSIGN expr
+    { } /* skip difficult things for now */
+    | OBJECTID '(' expressions ')'
+    { }
+    | IF expr THEN expr ELSE expr FI
+    { }
+    | WHILE expr LOOP expr POOL
+    { } /* skip difficult things for now */
+    | CASE expr OF cases ESAC
+    { }
+    | NEW TYPEID
+    { }
+    | ISVOID expr
+    { }
+    | expr '+' expr
+    { }
+    | expr '-' expr
+    { }
+    | expr '*' expr
+    { }
+    | expr '/' expr
+    { }
+    | '~' expr
+    { }
+    | expr '<' expr
+    { }
+    | expr LE expr
+    { }
+    | expr '=' expr
+    { }
+    | NOT expr
+    { }
+    | '(' expr ')'
+    { }
+    | OBJECTID
+    { }
+    | INT_CONST
+    { }
+    | STR_CONST
+    { }
+    | BOOL_CONST
+    { }
+
+    expressions
+    : expr
+    { }
+    | expressions ',' expr
+    { }
+
+    cases
+    : case
+    { }
+    | cases case
+    { }
+
+    case
+    : OBJECTID ':' TYPEID DARROW expr ';'
+    { }
     
     /* end of grammar */
     %%
