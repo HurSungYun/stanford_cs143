@@ -176,31 +176,33 @@
     feature_list:		/* empty */
     {  $$ = nil_Features(); }
     | feature ';'
-    { }
+    {  $$ = single_Features($1); }
     | feature_list feature ';'
-    { }
+    {  $$ = append_Features($1, single_Features($2)); }
 
     feature
     : OBJECTID '(' formal_list ')' ':' TYPEID '{' expr '}'
-    { }
-    | OBJECTID ':' TYPEID ASSIGN expr
-    { }
+    {  $$ = method($1, $3, $6, $8); }
     | OBJECTID ':' TYPEID
-    { }
+    {  $$ = attr($1, $3, no_expr()); }
+    | OBJECTID ':' TYPEID ASSIGN expr
+    {  $$ = attr($1, $3, assign($1, $5)); }
 
     formal_list
-    : formal
-    { }
+    : /* empty */
+    {  $$ = nil_Formals(); }
+    | formal
+    {  $$ = single_Formals($1); }
     | formal_list ',' formal
-    { }
+    {  $$ = append_Formals($1, single_Formals($3)); }
 
     formal
     : OBJECTID ':' TYPEID
-    { }
+    {  $$ = formal($1, $3)); }
 
     expr
     : OBJECTID ASSIGN expr
-    { }
+    {  $$ = assign($1, $3); }
     | expr '.' OBJECTID '(' expr_list_comma ')'
     { }
     | expr '@' TYPEID '.' OBJECTID '(' expr_list_comma ')'
@@ -222,7 +224,7 @@
     | ISVOID expr
     { }
     | expr '+' expr
-    { }
+    {  $$ = plus($1, $3); }
     | expr '-' expr
     { }
     | expr '*' expr
