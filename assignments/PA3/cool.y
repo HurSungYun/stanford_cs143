@@ -136,6 +136,14 @@
     
     /* You will want to change the following line. */
     %type <features> feature_list
+    %type <feature> feature
+    %type <formals> formal_list
+    %type <formal> formal
+    %type <expression> expr
+    %type <expressions> expr_list_comma
+    %type <expressions> expr_list_semicolon
+    %type <expressions> expr_list_let
+    %type <cases> case_list
     
     /* Precedence declarations go here. */
     
@@ -172,19 +180,18 @@
     | feature_list feature ';'
     { }
 
-
     feature
-    : OBJECTID '(' formals ')' ':' TYPEID '{' expr '}'
+    : OBJECTID '(' formal_list ')' ':' TYPEID '{' expr '}'
     { }
     | OBJECTID ':' TYPEID ASSIGN expr
     { }
     | OBJECTID ':' TYPEID
     { }
 
-    formals
+    formal_list
     : formal
     { }
-    | formals ',' formal
+    | formal_list ',' formal
     { }
 
     formal
@@ -193,14 +200,22 @@
 
     expr
     : OBJECTID ASSIGN expr
-    { } /* skip difficult things for now */
-    | OBJECTID '(' expressions ')'
+    { }
+    | expr '.' OBJECTID '(' expr_list_comma ')'
+    { }
+    | expr '@' TYPEID '.' OBJECTID '(' expr_list_comma ')'
+    { }
+    | OBJECTID '(' expr_list_comma ')'
     { }
     | IF expr THEN expr ELSE expr FI
     { }
     | WHILE expr LOOP expr POOL
-    { } /* skip difficult things for now */
-    | CASE expr OF cases ESAC
+    { }
+    | '{' expr_list_semicolon '}'
+    { }
+    | LET expr_list_let IN expr
+    { }
+    | CASE expr OF case_list ESAC
     { }
     | NEW TYPEID
     { }
@@ -235,22 +250,34 @@
     | BOOL_CONST
     { }
 
-    expressions
+    expr_list_comma
     : expr
     { }
-    | expressions ',' expr
+    | expr_list_comma ',' expr
     { }
 
-    cases
-    : case
-    { }
-    | cases case
-    { }
-
-    case
+    case_list
     : OBJECTID ':' TYPEID DARROW expr ';'
     { }
-    
+    | case_list OBJECTID ':' TYPEID DARROW expr ';'
+    { }
+
+    expr_list_semicolon
+    : expr ';'
+    { }
+    | expr_list_semicolon expr ';'
+    { }
+
+    expr_list_let
+    : OBJECTID ':' TYPEID
+    { }
+    | OBJECTID ':' TYPEID LE expr
+    { }
+    | expr_list_let ',' OBJECTID ':' TYPEID
+    { }
+    | expr_list_let ',' OBJECTID ':' TYPEID LE expr
+    { }
+
     /* end of grammar */
     %%
     
