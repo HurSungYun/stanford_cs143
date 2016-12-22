@@ -218,8 +218,8 @@
     {  $$ = loop($2, $4); }
     | '{' expr_list_semicolon '}'
     {  $$ = block($2); }
-    | LET expr_list_let IN expr
-    {  /* don't forget to do */ }
+    | LET expr_list_let
+    {  $$ = $2; }
     | CASE expr OF case_list ESAC
     {  $$ = typcase($2, $4); }
     | NEW TYPEID
@@ -280,14 +280,14 @@
     ;
 
     expr_list_let
-    : OBJECTID ':' TYPEID
-    { }
-    | OBJECTID ':' TYPEID LE expr
-    { }
-    | expr_list_let ',' OBJECTID ':' TYPEID
-    { }
+    : OBJECTID ':' TYPEID IN expr
+    {  $$ = let($1, $3, no_expr(), $5); }
+    | OBJECTID ':' TYPEID ASSIGN expr IN expr
+    {  $$ = let($1, $3, $5, $7); }
+    | OBJECTID ':' TYPEID ',' expr_list_let
+    {  $$ = let($1, $3, no_expr(), $5); }
     | expr_list_let ',' OBJECTID ':' TYPEID LE expr
-    { }
+    {  $$ = let($1, $3, $5, $7); }
     ;
 
     /* end of grammar */
