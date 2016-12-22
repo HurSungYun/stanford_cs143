@@ -221,7 +221,7 @@
     | LET expr_list_let IN expr
     {  /* don't forget to do */ }
     | CASE expr OF case_list ESAC
-    {  $$ = typecase($2, $4); }
+    {  $$ = typcase($2, $4); }
     | NEW TYPEID
     {  $$ = new_($2); }
     | ISVOID expr
@@ -233,7 +233,7 @@
     | expr '*' expr
     {  $$ = mul($1, $3); }
     | expr '/' expr
-    {  $$ = divide($1, $3); /* check if 3 is 0 or not */ }
+    {  $$ = divide($1, $3); /* check if $3 is 0 or not */ }
     | '~' expr
     {  $$ = neg($2); }
     | expr '<' expr
@@ -257,24 +257,26 @@
     ;
 
     expr_list_comma
-    : expr
-    { }
+    :
+    {  $$ = nil_Expressions(); }
+    | expr
+    {  $$ = single_Expressions($1); }
     | expr_list_comma ',' expr
-    { }
+    {  $$ = append_Expressions($1, sing_Expressions($3)); }
     ;
 
     case_list
     : OBJECTID ':' TYPEID DARROW expr ';'
-    { }
+    {  $$ = single_Cases(branch($1, $3, $5)); }
     | case_list OBJECTID ':' TYPEID DARROW expr ';'
-    { }
+    {  $$ = append_Cases($1, branch($2, $4, $6)); }
     ;
 
     expr_list_semicolon
     : expr ';'
-    { }
+    {  $$ = single_Expressions($1); }
     | expr_list_semicolon expr ';'
-    { }
+    {  $$ = append_Expressions($1, single_Expressions($2)); }
     ;
 
     expr_list_let
