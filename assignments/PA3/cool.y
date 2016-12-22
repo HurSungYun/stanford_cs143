@@ -187,6 +187,7 @@
     {  $$ = attr($1, $3, no_expr()); }
     | OBJECTID ':' TYPEID ASSIGN expr
     {  $$ = attr($1, $3, assign($1, $5)); }
+    ;
 
     formal_list
     : /* empty */
@@ -195,80 +196,86 @@
     {  $$ = single_Formals($1); }
     | formal_list ',' formal
     {  $$ = append_Formals($1, single_Formals($3)); }
+    ;
 
     formal
     : OBJECTID ':' TYPEID
     {  $$ = formal($1, $3)); }
+    ;
 
     expr
     : OBJECTID ASSIGN expr
     {  $$ = assign($1, $3); }
     | expr '.' OBJECTID '(' expr_list_comma ')'
-    { }
+    {  $$ = dispatch($1, $3, $5); }
     | expr '@' TYPEID '.' OBJECTID '(' expr_list_comma ')'
-    { }
+    {  $$ = static_dispatch($1, $3, $5, $7); }
     | OBJECTID '(' expr_list_comma ')'
-    { }
+    { } /* don't forget to do */
     | IF expr THEN expr ELSE expr FI
-    { }
+    {  $$ = cond($2, $4, $6); }
     | WHILE expr LOOP expr POOL
-    { }
+    {  $$ = loop($2, $4); }
     | '{' expr_list_semicolon '}'
-    { }
+    {  $$ = block($2); }
     | LET expr_list_let IN expr
-    { }
+    {  /* don't forget to do */ }
     | CASE expr OF case_list ESAC
-    { }
+    {  $$ = typecase($2, $4); }
     | NEW TYPEID
-    { }
+    {  $$ = new_($2); }
     | ISVOID expr
-    { }
+    {  $$ = isvoid($2); }
     | expr '+' expr
     {  $$ = plus($1, $3); }
     | expr '-' expr
-    { }
+    {  $$ = sub($1, $3); }
     | expr '*' expr
-    { }
+    {  $$ = mul($1, $3); }
     | expr '/' expr
-    { }
+    {  $$ = divide($1, $3); /* check if 3 is 0 or not */ }
     | '~' expr
-    { }
+    {  $$ = neg($2); }
     | expr '<' expr
-    { }
+    {  $$ = lt($1, $3); }
     | expr LE expr
-    { }
+    {  $$ = leq($1, $3); }
     | expr '=' expr
-    { }
+    {  $$ = eq($1, $3); }
     | NOT expr
-    { }
+    {  $$ = comp($2); }
     | '(' expr ')'
-    { }
+    {  $$ = $2; }
     | OBJECTID
-    { }
+    {  $$ = object($1); }
     | INT_CONST
-    { }
+    {  $$ = int_const($1); }
     | STR_CONST
-    { }
+    {  $$ = string_const($1); }
     | BOOL_CONST
-    { }
+    {  $$ = bool_const($1); }
+    ;
 
     expr_list_comma
     : expr
     { }
     | expr_list_comma ',' expr
     { }
+    ;
 
     case_list
     : OBJECTID ':' TYPEID DARROW expr ';'
     { }
     | case_list OBJECTID ':' TYPEID DARROW expr ';'
     { }
+    ;
 
     expr_list_semicolon
     : expr ';'
     { }
     | expr_list_semicolon expr ';'
     { }
+    ;
 
     expr_list_let
     : OBJECTID ':' TYPEID
@@ -279,6 +286,7 @@
     { }
     | expr_list_let ',' OBJECTID ':' TYPEID LE expr
     { }
+    ;
 
     /* end of grammar */
     %%
