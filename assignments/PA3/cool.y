@@ -142,7 +142,7 @@
     %type <expression> expr
     %type <expressions> expr_list_comma
     %type <expressions> expr_list_semicolon
-    %type <expressions> expr_list_let
+    %type <expression> expr_let
     %type <cases> case_list
     
     /* Precedence declarations go here. */
@@ -155,17 +155,23 @@
     %left ISVOID
     %left '~'
     %left '@'
-    %left '.'    
+    %left '.'
     
     %%
     /* 
     Save the root of the abstract syntax tree in a global variable.
     */
-    program	: class_list	{ @$ = @1; ast_root = program($1); }
+    program
+    : class_list
+    {
+        @$ = @1;
+        SET_NODELOC(@1);
+        ast_root = program($1);
+    }
     ;
     
     class_list
-    : class			/* single class , is it okay to avoid left recursion? */
+    : class		/* single class , is it okay to avoid left recursion? */
     {
       @$ = @1;
       SET_NODELOC(@1);
@@ -260,7 +266,7 @@
     {
       @$ = @3;
       SET_NODELOC(@3);
-      $$ = formal($1, $3));
+      $$ = formal($1, $3);
     }
     ;
 
@@ -307,7 +313,7 @@
       SET_NODELOC(@1);
       $$ = block($2);
     }
-    | LET expr_list_let
+    | LET expr_let
     {
       @$ = @2;
       SET_NODELOC(@2);
@@ -432,7 +438,7 @@
     {
       @$ = @3;
       SET_NODELOC(@3);
-      $$ = append_Expressions($1, sing_Expressions($3));
+      $$ = append_Expressions($1, single_Expressions($3));
     }
     ;
 
@@ -447,7 +453,7 @@
     {
       @$ = @6;
       SET_NODELOC(@6);
-      $$ = append_Cases($1, branch($2, $4, $6));
+      $$ = append_Cases($1, single_Cases(branch($2, $4, $6)));
     }
     ;
 
@@ -466,7 +472,7 @@
     }
     ;
 
-    expr_list_let
+    expr_let
     : OBJECTID ':' TYPEID IN expr
     {
       @$ = @5;
@@ -479,13 +485,13 @@
       SET_NODELOC(@7);
       $$ = let($1, $3, $5, $7);
     }
-    | OBJECTID ':' TYPEID ',' expr_list_let
+    | OBJECTID ':' TYPEID ',' expr_let
     {
       @$ = @5;
       SET_NODELOC(@5);
       $$ = let($1, $3, no_expr(), $5);
     }
-    | expr_list_let ',' OBJECTID ':' TYPEID LE expr
+    | OBJECTID ':' TYPEID ASSIGN expr ',' expr_let
     {
       @$ = @7;
       SET_NODELOC(@7);
