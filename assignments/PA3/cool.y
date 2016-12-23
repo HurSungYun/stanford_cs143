@@ -146,7 +146,16 @@
     %type <cases> case_list
     
     /* Precedence declarations go here. */
-    
+
+    %right ASSIGN
+    %left NOT
+    %nonassoc LE '<' '='
+    %left '+' '-'
+    %left '*' '/'
+    %left ISVOID
+    %left '~'
+    %left '@'
+    %left '.'    
     
     %%
     /* 
